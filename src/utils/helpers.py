@@ -8,6 +8,7 @@ import magic
 import uuid
 
 _TEMP_DIR: Path = Path(tf.gettempdir())
+_DOWNLOAD_DIR: Path = Path.home() / "Downloads"
 
 def select_audio_files() -> list[Path]:
     """Open a native file dialog and return the selected audio/video paths."""
@@ -49,8 +50,13 @@ def generate_name_audio_file() -> Path:
 
         return _TEMP_DIR / f"{file_name}.wav"
 
+def generate_name_markdown_file()-> str:
+    unique_id: str = str(uuid.uuid4())[:6]
+    return str(_DOWNLOAD_DIR / f"trascription-{unique_id}.md")
 
-def convert_to_wav_16_mono_v2() -> list[Path]:
+
+
+def convert_to_wav_16_mono() -> list[Path]:
     """Prompt the user to pick files, convert each to 16 kHz mono WAV, and return the resulting paths."""
     audio_files_converted: list[Path] = []
     audio_files: list[Path] = select_audio_files()
