@@ -1,10 +1,9 @@
 import logging
 import sys
 from pathlib import Path
-from utils.helpers import convert_to_wav_16_mono_v2
+from utils.helpers import convert_to_wav_16_mono, generate_name_markdown_file
 from processor.cleaner import reduce_noise
 from processor.transcriber import whisper_model
-
 
 logging.basicConfig(
     level=logging.INFO,
@@ -14,7 +13,7 @@ logging.basicConfig(
 
 def main() -> None:
 
-    audio_files: list[Path] = convert_to_wav_16_mono_v2()
+    audio_files: list[Path] = convert_to_wav_16_mono()
     if not audio_files:
         logging.error("No audio files found or conversion failed.")
         sys.exit(1)
