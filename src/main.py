@@ -45,8 +45,9 @@ def main() -> None:
             segments, _ = model.transcribe(str(path_audio_nr), beam_size=5)
             with open(generate_name_markdown_file()
 , "w", encoding="utf-8") as f:
+
                 for segment in segments:
-                    f.writelines("%s" % (segment.text))
+                    f.writelines("[%.2fs -> %.2fs] %s" % (segment.start, segment.end, segment.text))
                     # print("[%.2fs -> %.2fs] %s" % (segment.start, segment.end, segment.text))
 
 
