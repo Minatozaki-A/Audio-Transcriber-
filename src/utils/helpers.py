@@ -50,9 +50,9 @@ def generate_name_audio_file() -> Path:
 
         return _TEMP_DIR / f"{file_name}.wav"
 
-def generate_name_markdown_file()-> str:
-    unique_id: str = str(uuid.uuid4())[:6]
-    return str(_DOWNLOAD_DIR / f"trascription-{unique_id}.md")
+# def generate_name_markdown_file()-> str:
+#    unique_id: str = str(uuid.uuid4())[:6]
+#    return str(_DOWNLOAD_DIR / f"trascription-{unique_id}.md")
 
 
 
@@ -69,22 +69,22 @@ def convert_to_wav_16_mono() -> list[Path]:
             logging.error("Unsupported file type: %s", mime)
             continue
 
-        if mime in {"audio/wav", "audio/x-wav"}:
-            logging.info("File %s already in WAV format, skipping conversion", af.name)
-            audio_files_converted.append(af)
-            continue
+#       if mime in {"audio/wav", "audio/x-wav"}:
+#            logging.info("File %s already in WAV format, skipping conversion", af.name)
+#            audio_files_converted.append(af)
+#            continue
 
         try:
             new_name: Path = generate_name_audio_file()
 
             sp.run(_command_ffmpeg(af, new_name), check=True)
 
-            logging.info("Audio file s% | type s% converted to s%",
+            logging.info("Audio file %s | type %s | converted to %s",
                             af, mime, new_name, mime)
 
             audio_files_converted.append(new_name)
 
         except sp.CalledProcessError as e:
-            logging.error("Error converting audio file s%: %s", af.name, e)
+            logging.error("Error converting audio file %s: %s", af.name, e)
 
     return audio_files_converted
