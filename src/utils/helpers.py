@@ -1,5 +1,6 @@
 import logging
 import tempfile as tf
+import wave
 from pathlib import Path
 import tkinter as tk
 from tkinter import filedialog
@@ -41,6 +42,24 @@ def _command_ffmpeg(audio_file: Path, output_file: Path):
         str(output_file),
         ]
     return command
+
+def _is_target_wav_format_stdlib(file_path: Path) -> bool:
+    try:
+
+        with wave.open(str(file_path), "rb") as wf:
+            return (
+                    wf.getframerate() == 16000
+                    and wf.getnchannels() == 1
+                    and wf.getsampwidth() == 2 # 2 bytes = 16 bits = s16
+            )
+
+    except (wave.Error, IOError) as e:
+        logging.error("Cannot read WAV header of %s: %s", file_path.name, e)
+        return False
+
+    except Exception as e:
+        logging.error("Unexpected error reading %s: %s", file_path.name, e)
+        return False
 
 def generate_name_audio_file() -> Path:
         """Return a unique temp path of the form <tmpdir>/aud-<9-char-uuid>.wav."""
