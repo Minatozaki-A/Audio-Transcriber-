@@ -69,41 +69,71 @@ def generate_name_audio_file() -> Path:
 
         return _TEMP_DIR / f"{file_name}.wav"
 
-# def generate_name_markdown_file()-> str:
-#    unique_id: str = str(uuid.uuid4())[:6]
-#    return str(_DOWNLOAD_DIR / f"trascription-{unique_id}.md")
+def generate_name_markdown_file()-> str:
+    unique_id: str = str(uuid.uuid4())[:9]
+
+    name_file_markdown: str = f"transcription-{unique_id}.md"
+
+    return str(_DOWNLOAD_DIR / name_file_markdown)
 
 
 
 def convert_to_wav_16_mono() -> list[Path]:
     """Prompt the user to pick files, convert each to 16 kHz mono WAV, and return the resulting paths."""
     audio_files_converted: list[Path] = []
+    # audio_files: list[Path] = select_audio_files()
     audio_files: list[Path] = select_audio_files()
 
 
     for af in audio_files:
-        mime: str = magic.from_file(af, mime=True)
-
-        if not (mime.startswith("audio/") or mime.startswith("video/")):
-            logging.error("Unsupported file type: %s", mime)
+        try:
+            mime: str = magic.from_file(af, mime=True)
+        except (FileNotFoundError, PermissionError, OSError, IOError) as e:
+            logging.error("Cannot read file %s: %s", af.name, e)
             continue
 
-#       if mime in {"audio/wav", "audio/x-wav"}:
-#            logging.info("File %s already in WAV format, skipping conversion", af.name)
-#            audio_files_converted.append(af)
-#            continue
+        except Exception as e:
+            logging.error("Unexpected error reading file %s: %s", af, e)
+            continue
+
+        if not (mime.startswith("audio/") or mime.startswith("video/")):
+            logging.error("Unsupported file type: %s (%s)", mime, af.name)
+            continue
+
+        if _is_target_wav_format_stdlib(af):
+            logging.info("%s is already in target WAV format (16kHz, mono, 16-bit)", af.name)
+            audio_files_converted.append(af)
+            continue
+
+
+        new_name: Path = generate_name_audio_file()
 
         try:
-            new_name: Path = generate_name_audio_file()
-
             sp.run(_command_ffmpeg(af, new_name), check=True)
-
-            logging.info("Audio file %s | type %s | converted to %s",
-                            af, mime, new_name, mime)
-
-            audio_files_converted.append(new_name)
+            logging.info("%s converted into %s", af.name, new_name.name)
 
         except sp.CalledProcessError as e:
             logging.error("Error converting audio file %s: %s", af.name, e)
+            continue
+
+        except FileNotFoundError as e:
+            logging.error("ffmpeg not found in PATH — aborting conversion")
+            continue
+
+        except PermissionError as e:
+            logging.error("")
+            continue
+
+        except OSError as e:
+            logging.error("I/O error converting %s: %s", af.name, e)
+            continue
+
+        except Exception as e:
+            logging.error("Unexpected error converting %s: %s", af.name, e)
+            continue
+        logging.info("Audio file %s | type %s | converted to %s",
+                            af.name, mime, new_name.name)
+
+        audio_files_converted.append(new_name)
 
     return audio_files_converted
