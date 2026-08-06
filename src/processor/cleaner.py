@@ -1,14 +1,14 @@
 import noisereduce as nr
 import soundfile as sf
-import librosa
+# import librosa
 import logging
-import tempfile
+import tempfile as tf
 from pathlib import Path
 from utils.helpers import generate_name_audio_file
 
 
 
-_TEMP_DIR: Path = Path(tempfile.gettempdir())
+_TEMP_DIR: Path = Path(tf.gettempdir())
 
 
 def reduce_noise(path_file: Path) -> Path | None:
