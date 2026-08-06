@@ -13,34 +13,53 @@ from faster_whisper import WhisperModel
 
         # or run on CPU with INT8
         model = WhisperModel(_MODEL_SIZE, device="cpu", compute_type="int8")
-
-        segments, info = model.transcribe(str(path_audio_nr), beam_size=5)
-
-        logging.info("Detected language '%s' with probability %f" % (info.language, info.language_probability))
-
-        for segment in segments:
-            print("[%.2fs -> %.2fs] %s" % (segment.start, segment.end, segment.text))
-
-    finally:
-        del model
-        gc.collect()
-        if torch.cuda.is_available():
-            torch.cuda.empty_cache()
-            torch.cuda.ipc_collect()"""
+"""
 
 @contextmanager
-def whisper_model(*args, **kwargs):
+def whisper_model(
+        model_size: str,
+        device: str,
+        compute_type: str
+    ):
     """Context manager that loads a WhisperModel and guarantees GPU/CPU memory is freed on exit."""
-    model = WhisperModel(*args, **kwargs)
+    model = None
+
     try:
-        logging.info("Model loaded successfully")
-        yield model
+        model = WhisperModel(model_size, device, compute_type)
+        # BUG (línea 34): si WhisperModel(...) lanza (CUDA OOM, modelo inválido, ctranslate2, etc.),
+        # la excepción sale sin log ni contexto propio; el caller solo ve el traceback crudo.
+        logging.info("Model loaded successfully: %s (%s, %s)" % (model_size, device, compute_type))
+
+    except torch.cuda.OutOfMemoryError as e:
+        logging.error("CUDA OOM loading model '%s': %s", model_size, e)
+        raise
+
+    except (RuntimeError, ValueError, OSError, IOError) as e:
+        logging.error("Failed to load model '%s' (device=%s, compute_type=%s): %s",
+                      model_size, device, compute_type, e)
+        raise
+
+    else:
+        try:
+            yield model
+        except Exception:
+            logging.exception("Error during model usage")
+            raise
+
     finally:
-        del model
-        gc.collect()
-        logging.info("Model garbage collected")
-        if torch.cuda.is_available():
-            logging.info("CUDA memory before cleanup")
-            torch.cuda.empty_cache()
-            torch.cuda.ipc_collect()
-            logging.info("CUDA memory cleanup")
+        if model is not None:
+            del model
+            gc.collect()
+            logging.info("Model garbage collected")
+
+        if device == "cuda" and torch.cuda.is_available():
+            try:
+                torch.cuda.empty_cache()
+                torch.cuda.ipc_collect()
+                logging.info("CUDA memory cleanup")
+            except RuntimeError as e:
+                logging.error("Failed to clean CUDA memory: %s", e)
+
+            # BUG (líneas 42-45): se vacía la caché CUDA siempre que haya GPU, aunque el modelo
+            # se haya cargado en CPU (device="cpu"); no es incorrecto pero el log "CUDA memory
+            # cleanup" puede inducir a pensar que el modelo usó GPU cuando no fue así.
