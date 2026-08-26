@@ -43,20 +43,6 @@ def reduce_noise(path_file: Path) -> Path | None:
 
     return output_path
 
-    # except FileNotFoundError as e:
-        #logging.error("File %s not found: %s", path_file, e)
-
-    #except sf.SoundFileError as e:
-        # logging.error("Error reading file %s: %s", path_file, e)
-
-    # except Exception as e:
-        # logging.error("Error writing file %s: %s", output_path, e)
-        # - logging.exception()
-        # BUG (líneas 32-33): el except genérico dice "Error writing file" pero también captura
-        # fallos de reduce_noise (y otros no de escritura), lo que oculta la causa real.
-
-    # return None
-
 
 
 """
