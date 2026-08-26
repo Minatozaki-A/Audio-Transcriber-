@@ -22,14 +22,11 @@ def reduce_noise(path_file: Path) -> Path | None:
     except sf.SoundFileError as e:
         logging.error("Error reading file %s: %s", path_file, e)
         return None
-    except Exception as e:
-        logging.error("Error reading file %s: %s", path_file, e)
-        return None
 
 
     try:
         if data.ndim >= 2:
-            data = data.mean(axis=0)
+            data = data.mean(axis=1)
         reduced_noise = nr.reduce_noise(y=data, sr=rate, thresh_n_mult_nonstationary=2, stationary=False)
     except ValueError as e:
         logging.error("Error processing audio %s: %s", path_file, e)
