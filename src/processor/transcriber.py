@@ -1,6 +1,7 @@
 import gc
 import torch
 import logging
+import ctranslate2 as ct2
 from contextlib import contextmanager
 from faster_whisper import WhisperModel
 
@@ -57,3 +58,31 @@ def whisper_model(
                 logging.info("CUDA memory cleanup")
             except RuntimeError as e:
                 logging.error("Failed to clean CUDA memory: %s", e)
+
+
+def load_whisper_model():
+    try:
+        cuda_available = ct2.get_cuda_device_count() > 0
+    except Exception:
+        cuda_available = False
+
+    if cuda_available:
+         try:
+             logging.info("Cuda is available: loading model in DGPU with FP16")
+             return whisper_model(
+                 model_size="medium",
+                 device="cuda",
+                 compute_type="float16"
+             )
+         except (RuntimeError,OSError) as e:
+             logging.warning("Failed to load model in DGPU with FP16: %s", e)
+
+    logging.info("Loading model in CPU with INT8")
+    return whisper_model(
+        model_size="small",
+        device="cpu",
+        compute_type="int8"
+    )
+
+
+
