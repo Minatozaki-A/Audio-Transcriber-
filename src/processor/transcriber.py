@@ -26,8 +26,6 @@ def whisper_model(
 
     try:
         model = WhisperModel(model_size, device, compute_type)
-        # BUG (línea 34): si WhisperModel(...) lanza (CUDA OOM, modelo inválido, ctranslate2, etc.),
-        # la excepción sale sin log ni contexto propio; el caller solo ve el traceback crudo.
         logging.info("Model loaded successfully: %s (%s, %s)" % (model_size, device, compute_type))
 
     except torch.cuda.OutOfMemoryError as e:
@@ -59,7 +57,3 @@ def whisper_model(
                 logging.info("CUDA memory cleanup")
             except RuntimeError as e:
                 logging.error("Failed to clean CUDA memory: %s", e)
-
-            # BUG (líneas 42-45): se vacía la caché CUDA siempre que haya GPU, aunque el modelo
-            # se haya cargado en CPU (device="cpu"); no es incorrecto pero el log "CUDA memory
-            # cleanup" puede inducir a pensar que el modelo usó GPU cuando no fue así.
