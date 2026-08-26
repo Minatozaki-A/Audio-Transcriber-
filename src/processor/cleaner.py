@@ -35,9 +35,6 @@ def reduce_noise(path_file: Path) -> Path | None:
         logging.error("Out of memory processing %s: %s", path_file, e)
         return None
 
-        # BUG (línea 18): si el audio es multi-canal (no mono), `data` es 2D; noisereduce puede
-        # fallar o comportarse mal sin especificar eje/canal. El pipeline asume mono vía ffmpeg.
-        # pero ya se procesa en convert_to_wav_16_mono
     try:
         sf.write(str(output_path), reduced_noise, rate)
     except (sf.SoundFileError, OSError, PermissionError) as e:
