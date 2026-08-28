@@ -26,8 +26,8 @@ def whisper_model(
     model = None
 
     try:
-        model = WhisperModel(model_size, device, compute_type)
-        logging.info("Model loaded successfully: %s (%s, %s)" % (model_size, device, compute_type))
+        model = WhisperModel(model_size, device=device, compute_type=compute_type)
+        logging.info("Model loaded successfully: %s (%s, %s)", model_size, device, compute_type)
 
     except torch.cuda.OutOfMemoryError as e:
         logging.error("CUDA OOM loading model '%s': %s", model_size, e)
