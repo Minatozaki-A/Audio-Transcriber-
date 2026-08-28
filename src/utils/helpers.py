@@ -1,32 +1,16 @@
 import logging
 import tempfile as tf
 import wave
-from pathlib import Path
-import tkinter as tk
-from tkinter import filedialog
 import subprocess as sp
 import magic
-import uuid
+from datetime import date
+from pathlib import Path
+from itertools import count
 
+_ECHOBEAK_DIR: Path = Path.home() / "EchoBeak"
 _TEMP_DIR: Path = Path(tf.gettempdir())
-_DOWNLOAD_DIR: Path = Path.home() / "Downloads"
 
-def select_audio_files() -> list[Path]:
-    """Open a native file dialog and return the selected audio/video paths."""
-    root = tk.Tk()
-    root.withdraw()
 
-    file_paths: tuple[str, ...] = filedialog.askopenfilenames(
-        parent=root,
-        initialdir=str(Path.home()),
-        title="Select Audio Files",
-        filetypes=[("Audio Files", ["*.mp3", "*.wav", "*.flac", "*.ogg", "*.m4a", "*.aac", "*.opus", "*.wma"]),
-        ("Video", ["*.mp4", "*.mkv", "*.avi", "*.mov", "*.webm", "*.flv", "*.wmv", "*.m4v"]),
-        ("Todos los archivos", "*.*"),
-        ],
-    )
-    root.destroy()
-    return [Path(file_path) for file_path in file_paths]
 
 
 def _command_ffmpeg(audio_file: Path, output_file: Path):
