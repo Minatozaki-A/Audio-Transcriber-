@@ -111,7 +111,7 @@ def convert_to_wav_16_mono() -> list[Path]:
             logging.info("File %s is WAV but not target format, converting", af.name)
 
 
-        new_name: Path = generate_name_audio_file()
+        new_name: Path = create_temp_audio_path()
 
         try:
             sp.run(_command_ffmpeg(af, new_name), check=True)
