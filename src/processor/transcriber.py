@@ -60,29 +60,28 @@ def whisper_model(
                 logging.error("Failed to clean CUDA memory: %s", e)
 
 
+@contextmanager
 def load_whisper_model():
     try:
         cuda_available = ct2.get_cuda_device_count() > 0
-    except Exception:
+    except Exception as e:
+        logging.warning("CUDA device count check failed: %s", e)
         cuda_available = False
 
     if cuda_available:
-         try:
-             logging.info("Cuda is available: loading model in DGPU with FP16")
-             return whisper_model(
-                 model_size="medium",
-                 device="cuda",
-                 compute_type="float16"
-             )
-         except (RuntimeError,OSError) as e:
-             logging.warning("Failed to load model in DGPU with FP16: %s", e)
+        try:
+            logging.info("Cuda is available: loading model in DGPU with FP16")
+            with whisper_model("medium", "cuda", compute_type="float16") as model:
+                 yield model
+                 return
+        except (RuntimeError,OSError) as e:
+            logging.warning("Failed to load model in DGPU with FP16: %s", e)
+
 
     logging.info("Loading model in CPU with INT8")
-    return whisper_model(
-        model_size="small",
-        device="cpu",
-        compute_type="int8"
-    )
+
+    with whisper_model("small", "cpu", compute_type="int8") as model:
+        yield model
 
 
 
