@@ -41,24 +41,42 @@ def _is_target_wav_format_stdlib(file_path: Path) -> bool:
         logging.error("Cannot read WAV header of %s: %s", file_path.name, e)
         return False
 
-    except Exception as e:
-        logging.error("Unexpected error reading %s: %s", file_path.name, e)
-        return False
 
-def generate_name_audio_file() -> Path:
-        """Return a unique temp path of the form <tmpdir>/aud-<9-char-uuid>.wav."""
-        unique_id: str = str(uuid.uuid4())[:9]
+def _unique_path(base_path: Path, max_attempts: int = 1000)-> Path:
+    """Genera una ruta única añadiendo un sufijo numérico para evitar colisiones.
 
-        file_name: str = f"aud-{unique_id}"
+    Returns:
+        Path | None: La ruta única si se encuentra,
+    """
+    if not base_path.exists():
+        return base_path
+    stem, suffix = base_path.stem, base_path.suffix
+    for n in count(1, max_attempts + 1):
+        candidate: Path = base_path.parent / f"{stem}-({n}){suffix}"
+        if not candidate.exists():
+            return candidate
+    raise RuntimeError(f"could not find unique path for {base_path} after {max_attempts} attempts")
 
-        return _TEMP_DIR / f"{file_name}.wav"
 
-def generate_name_markdown_file()-> str:
-    unique_id: str = str(uuid.uuid4())[:9]
+def create_temp_audio_path(temp_dir: Path) -> Path:
+    """Crea un archivo temporal único para audio."""
+    tmp = tf.NamedTemporaryFile(
+        suffix=".wav",
+        prefix="temp-file-audio-",
+        dir=temp_dir,
+        delete=False,  # importante: si no, se borra al cerrarse
+    )
+    tmp.close()  # cerramos el handle, pero el archivo queda en disco
+    return Path(tmp.name)
 
-    name_file_markdown: str = f"transcription-{unique_id}.md"
+def create_name_trans_path() -> Path:
+    new_name = f"trans-{date.today():%Y-%m-%d}.md"
 
-    return str(_DOWNLOAD_DIR / name_file_markdown)
+    _ECHOBEAK_DIR.mkdir(parents=True, exist_ok=True)
+    final_name: Path = _ECHOBEAK_DIR / new_name
+
+    return _unique_path(final_name)
+
 
 
 def convert_to_wav_16_mono() -> list[Path]:
