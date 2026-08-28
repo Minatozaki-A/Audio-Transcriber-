@@ -4,7 +4,7 @@ import soundfile as sf
 import logging
 import tempfile as tf
 from pathlib import Path
-from utils.helpers import generate_name_audio_file
+from utils.helpers import create_temp_audio_path
 
 
 
@@ -12,10 +12,10 @@ _TEMP_DIR: Path = Path(tf.gettempdir())
 
 
 def reduce_noise(path_file: Path) -> Path | None:
-    output_path: Path = generate_name_audio_file()
+    output_path: Path = create_temp_audio_path(_TEMP_DIR)
 
     try:
-        data, rate = sf.read(path_file)
+        data, rate = sf.read(path_file, dtype="float32")
     except FileNotFoundError as e:
         logging.error("File %s not found: %s", path_file, e)
         return None
